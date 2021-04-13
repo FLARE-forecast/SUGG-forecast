@@ -32,6 +32,10 @@ noaa_forecast_path <- file.path(noaa_data_location,config$lake_name_code, lubrid
 
 forecast_files <- list.files(noaa_forecast_path, full.names = TRUE)
 
+forecast_remove <- grep("ens00.nc",forecast_files, value = T)
+unlink(forecast_remove)
+
+
 if(length(forecast_files) > 0){
   
   ##### Read configuration files

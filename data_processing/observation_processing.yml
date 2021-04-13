@@ -36,6 +36,7 @@ realtime_temp_location: data
 
 insitu_obs_fname:
     - temp_data.csv
+    - surface_sonde.csv
 
 secchi_fname: 
     - secchi_data.csv
@@ -58,6 +59,7 @@ averaging_period_starting_hour: "00:00:00"
 measurement_methods: 
     temperature:
         - thermistor
+        - sonde
         - secchi
     
 

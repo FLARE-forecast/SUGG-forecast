@@ -15,7 +15,7 @@ products = c("DP1.00098.001", "DP1.00002.001", "DP1.00023.001", "DP1.00006.001",
 buoy_products = c("DP1.20264.001","DP1.20252.001")
 
 local_directory <- file.path(getwd(), "data", "NOAA_data")
-date = seq(from = Sys.Date()-10, to = Sys.Date()-1, by = "days")
+date = seq(from = as.Date("2020-09-30"), to = as.Date("2020-12-30"), by = "days")
 cycle = c("00")
 noaa_data_location <- file.path(getwd(),"data","NOAA_data","noaa","NOAAGEFS_1hr",siteID)
 files_noaa <- list.files(noaa_data_location)
