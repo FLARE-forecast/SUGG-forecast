@@ -1,0 +1,11 @@
+restart_file: .na
+start_day_local: '2020-03-01'
+start_time_local: '00:00:00'
+end_day_local: .na
+forecast_start_day_local: '2021-03-01'
+forecast_horizon: 1
+forecast_project_id: SUGG_forecasts
+sim_name: SUGG_forecasts
+forecast_sss_on: no
+forecast_location: /Users/ryanmcclure/Documents/SUGG-forecast/glm
+execute_location: /Users/ryanmcclure/Documents/SUGG-forecast/wd

@@ -1,5 +1,5 @@
 
-setwd("~/Documents/SUGG-forecast")
+setwd(lake_directory)
 
 forecast_location <- file.path(getwd(), "glm")
 noaa_data_location <- file.path(getwd(),"data","NOAA_data","noaa","NOAAGEFS_1hr")
@@ -19,21 +19,47 @@ if(is.na(config$run_config$forecast_start_day_local)){
   forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
   end_datetime_local <- forecast_start_datetime_local + lubridate::days(config$run_config$forecast_horizon)
 }
-
 #Weather Drivers
-start_datetime_UTC <-  lubridate::with_tz(start_datetime_local, tzone = "EST")
-end_datetime_UTC <-  lubridate::with_tz(end_datetime_local, tzone = "EST")
-forecast_start_datetime_CT <- lubridate::with_tz(forecast_start_datetime_local, tzone = "EST")
-forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "EST")
-forecast_hour <- lubridate::hour(forecast_start_datetime_CT)
-if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
-noaa_forecast_path <- file.path(noaa_data_location,config$lake_name_code, lubridate::as_date(forecast_start_datetime_UTC),forecast_hour)
+start_datetime_UTC <-  lubridate::with_tz(start_datetime_local, tzone = "UTC")
+end_datetime_UTC <-  lubridate::with_tz(end_datetime_local, tzone = "UTC")
+forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "UTC")
+forecast_hour <- lubridate::hour(forecast_start_datetime_UTC)
+if(forecast_hour < 10){forecast_hour <- paste0("00")}
+noaa_forecast_path <- file.path(getwd(),"data","NOAA_data","noaa","NOAAGEFS_1hr",siteID,lubridate::as_date(forecast_start_datetime_UTC),forecast_hour)
 
+#source edited functions
 
 forecast_files <- list.files(noaa_forecast_path, full.names = TRUE)
-
 forecast_remove <- grep("ens00.nc",forecast_files, value = T)
 unlink(forecast_remove)
+
+# Set up timings
+start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+if(is.na(config$run_config$forecast_start_day_local)){
+  end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+  forecast_start_datetime_local <- end_datetime_local
+}else{
+  forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+  end_datetime_local <- forecast_start_datetime_local + lubridate::days(config$run_config$forecast_horizon)
+}
+
+spin_up_time <- seq(start_datetime_local, as.POSIXct(run_config$forecast_start_day_local), by = "1 day")
+full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
+observed_met_file <- file.path(config$qaqc_data_location,"observed-met_barc.nc")
+
+# source("analyze_NOAA_forecast.R")
+
+# Returns a plot of MAE for the forecast
+# p <- analyze_NOAA_forecast(obs_met_file = observed_met_file,
+#                            out_dir = config$run_config$execute_location,
+#                            forecast_dirs = noaa_forecast_path,
+#                            local_tzone = config$local_tzone,
+#                            start_datetime_local = start_datetime_local,
+#                            end_datetime_local = end_datetime_local,
+#                            forecast_start_datetime = forecast_start_datetime_local,
+#                            use_forecasted_met = TRUE)
+# 
+# p
 
 
 if(length(forecast_files) > 0){
@@ -72,32 +98,59 @@ if(length(forecast_files) > 0){
   #Step up Drivers
   
   #Weather Drivers
-  start_datetime_UTC <-  lubridate::with_tz(start_datetime_local, tzone = "EST")
-  end_datetime_UTC <-  lubridate::with_tz(end_datetime_local, tzone = "EST")
-  forecast_start_datetime_CT <- lubridate::with_tz(forecast_start_datetime_local, tzone = "EST")
-  forecast_hour <- lubridate::hour(forecast_start_datetime_CT)
-  if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
-  forecast_path <- file.path(config$data_location, "NOAA_data/noaa/NOAAGEFS_1hr",config$lake_name_code,lubridate::as_date(forecast_start_datetime_UTC),forecast_hour)
+  start_datetime_UTC <-  lubridate::with_tz(start_datetime_local, tzone = "UTC")
+  end_datetime_UTC <-  lubridate::with_tz(end_datetime_local, tzone = "UTC")
+  forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "UTC")
+  forecast_hour <- lubridate::hour(forecast_start_datetime_UTC)
+  if(forecast_hour < 10){forecast_hour <- paste0("00")}
+  noaa_forecast_path <- file.path(getwd(),"data","NOAA_data","noaa","NOAAGEFS_1hr",siteID,lubridate::as_date(forecast_start_datetime_UTC),forecast_hour)
   
   met_out <- flare::generate_glm_met_files(obs_met_file = observed_met_file,
-                                         out_dir = config$run_config$execute_location,
-                                         forecast_dir = forecast_path,
-                                         local_tzone = config$local_tzone,
-                                         start_datetime_local = start_datetime_local,
-                                         end_datetime_local = end_datetime_local,
-                                         forecast_start_datetime = forecast_start_datetime_local,
-                                         use_forecasted_met = TRUE)
+                                           out_dir = config$run_config$execute_location,
+                                           forecast_dir = noaa_forecast_path,
+                                           local_tzone = config$local_tzone,
+                                           start_datetime_local = start_datetime_local,
+                                           end_datetime_local = end_datetime_local,
+                                           forecast_start_datetime = forecast_start_datetime_local,
+                                           use_forecasted_met = TRUE)
   met_file_names <- met_out$filenames
   historical_met_error <- met_out$historical_met_error
   
+  forecasts <- config$run_config$execute_location
+  tbl <- list.files(path = forecasts, pattern = "*.csv") %>% 
+    map_df(~read_csv(file.path(forecasts, .)))%>%
+    mutate(type = ifelse(time < forecast_start_datetime_UTC,"observed", "forecast"))
+  
+  hourly_mean_line <- tbl %>%
+    reshape2::melt(., id = c("time","type"))%>%
+    filter(time >= (forecast_start_datetime_UTC)-lubridate::days(10))%>%
+    ggplot(., aes(time,value, color = type))+
+    geom_line(cex = 0.2, alpha = 0.5)+
+    labs(title = forecast_start_datetime_UTC)+
+    facet_wrap(~variable, scales = "free_y")+theme_classic()
+  hourly_mean_line
+  
+  hourly_mean_pts <- tbl %>%
+    reshape2::melt(., id = c("time","type"))%>%
+    filter(time > forecast_start_datetime_UTC-lubridate::days(1)&
+             time < forecast_start_datetime_UTC+lubridate::days(1))%>%
+    ggplot(., aes(time,value, color = type))+
+    geom_point(cex = 1, alpha = 0.5)+
+    labs(title = forecast_start_datetime_UTC)+
+    facet_wrap(~variable, scales = "free_y")+
+    theme_classic()
+  hourly_mean_pts
+  
+  
   
   #Create observation matrix
+  source(file.path(lake_directory, "data_processing/R/testing script.R"))
   obs <- flare::create_obs_matrix(cleaned_observations_file_long,
-                                  obs_config,
-                                  start_datetime_local,
-                                  end_datetime_local,
-                                  local_tzone = config$local_tzone,
-                                  modeled_depths = config$modeled_depths)
+                                obs_config,
+                                start_datetime_local,
+                                end_datetime_local,
+                                local_tzone = config$local_tzone,
+                                modeled_depths = config$modeled_depths)
   
   #Set observations in the "future" to NA
   full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
@@ -146,7 +199,7 @@ if(length(forecast_files) > 0){
   aux_states_init$salt <- init$salt
   
   #Run EnKF
-  enkf_output <- flare::run_enkf_forecast(states_init = init$states,
+  enkf_output <- flare::run_da_forecast(states_init = init$states,
                                           pars_init = init$pars,
                                           aux_states_init = aux_states_init,
                                           obs = obs,
@@ -163,8 +216,7 @@ if(length(forecast_files) > 0){
                                           pars_config = pars_config,
                                           states_config = states_config,
                                           obs_config = obs_config, 
-                                          management = NULL
-                                          
+                                          management = NULL              
   )
   
   # Save forecast

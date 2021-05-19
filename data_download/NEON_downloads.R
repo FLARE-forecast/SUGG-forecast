@@ -1,21 +1,21 @@
 # Function to extract and clean up the NEON data from NEON
-download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
+download_neon_files <- function(siteID_neon, siteID, products, buoy_products, ECtower){
 
         # Download newest products
         neonstore::neon_download(product = products, site = siteID_neon)
         
         # Store the NEON met data products
-        neonstore::neon_store("SECPRE_30min-basic")
-        neonstore::neon_store("2DWSD_30min-basic")
-        neonstore::neon_store("SLRNR_30min-basic")
-        neonstore::neon_store("SAAT_30min-basic")
-        neonstore::neon_store("RH_30min-basic")
-        neonstore::neon_store("BP_30min-basic")
+        #neonstore::neon_store("SECPRE_30min-basic")
+        #neonstore::neon_store("2DWSD_30min-basic")
+        #neonstore::neon_store("SLRNR_30min-basic")
+        #neonstore::neon_store("SAAT_30min-basic")
+        #neonstore::neon_store("RH_30min-basic")
+        #neonstore::neon_store("BP_30min-basic")
 
         
         # Tidy up the met data
         # Airtemp
-        airtemp <- neonstore::neon_table(table = "SAAT_30min-basic", site = "BARC") %>%
+        airtemp <- neonstore::neon_read(table = "SAAT_30min-basic", site = "BARC") %>%
           select(endDateTime, tempSingleMean)%>%
           mutate(time = lubridate::floor_date(endDateTime, unit = "hour"))%>%
           select(-endDateTime)%>%
@@ -25,7 +25,7 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
           mutate(time = time - 5*3600)
         
         # Radiation
-        radiation <- neonstore::neon_table(table = "SLRNR_30min-basic", site = "BARC") %>%
+        radiation <- neonstore::neon_read(table = "SLRNR_30min-basic", site = "BARC") %>%
           select(endDateTime, inSWMean, inLWMean) %>%
           mutate(time = lubridate::floor_date(endDateTime, unit = "hour"))%>%
           select(-endDateTime)%>%
@@ -35,7 +35,7 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
           mutate(time = time - 5*3600)
         
         # Humidity
-        humidity <- neonstore::neon_table(table = "RH_30min-basic", site = "BARC") %>% 
+        humidity <- neonstore::neon_read(table = "RH_30min-basic", site = "BARC") %>% 
           select(endDateTime, RHMean)%>%
           mutate(time = lubridate::floor_date(endDateTime, unit = "hour"))%>%
           select(-endDateTime)%>%
@@ -45,7 +45,7 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
           mutate(time = time - 5*3600)
         
         # Precipitation
-        precip  <- neonstore::neon_table(table = "SECPRE_30min-basic", site = "OSBS") %>%
+        precip  <- neonstore::neon_read(table = "SECPRE_30min-basic", site = ECtower) %>%
           select(endDateTime, secPrecipBulk) %>%
           mutate(time = lubridate::floor_date(endDateTime, unit = "hour"))%>%
           select(-endDateTime)%>%
@@ -55,7 +55,7 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
           mutate(time = time - 5*3600)
         
         # Wind Speed
-        windspeed <- neonstore::neon_table(table = "2DWSD_30min-basic", site = "BARC")%>%  
+        windspeed <- neonstore::neon_read(table = "2DWSD_30min-basic", site = "BARC")%>%  
           select(endDateTime, windSpeedMean)%>%
           mutate(time = lubridate::floor_date(endDateTime, unit = "hour"))%>%
           select(-endDateTime)%>%
@@ -65,7 +65,7 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
           mutate(time = time - 5*3600)
         
         # Pressure
-        pressure <- neonstore::neon_table(table = "BP_30min-basic", site = "BARC") %>%
+        pressure <- neonstore::neon_read(table = "BP_30min-basic", site = "BARC") %>%
           select(endDateTime, staPresMean)%>%
           mutate(time = lubridate::floor_date(endDateTime, unit = "hour"))%>%
           select(-endDateTime)%>%
@@ -95,12 +95,13 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
         neonstore::neon_download(product = buoy_products, site = siteID)
         
         # Store the NEON buoy data products
-        neonstore::neon_store("TSD_30_min-basic")
-        neonstore::neon_store("dep_secchi-basic")
+        #neonstore::neon_store("TSD_30_min-basic")
+        #neonstore::neon_store("dep_secchi-basic")
+        #neonstore::neon_store("dep_profileData-basic")
         
         # Water temperature by depth
         # ----------------------------------------------------------------------------------------
-        water_temp <- neonstore::neon_table(table = "TSD_30_min-basic", site = "SUGG")%>% 
+        water_temp <- neonstore::neon_read(table = "TSD_30_min-basic", site = "SUGG")%>% 
           select(endDateTime, thermistorDepth, tsdWaterTempMean) %>%
           arrange(endDateTime, thermistorDepth)%>%
           rename(depth = thermistorDepth)%>%
@@ -113,10 +114,23 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
           select(timestamp, hour, depth, value, variable, method)%>%
           mutate(timestamp = timestamp - 5*3600)
         
+        temp_profiles <- neonstore::neon_read(table = "dep_profileData-basic", site = "SUGG")%>%
+                select(date, sampleDepth, waterTemp) %>%
+                arrange(date, sampleDepth)%>%
+                rename(depth = sampleDepth)%>%
+                rename(value = waterTemp)%>%
+                rename(timestamp = date)%>%
+                mutate(variable = "temperature",
+                       hour = lubridate::hour(timestamp- 5*3600),
+                       method = "profile",
+                       value = ifelse(is.nan(value), NA, value))%>%
+                select(timestamp, hour, depth, value, variable, method)%>%
+                mutate(timestamp = timestamp - 5*3600)
+
         write_csv(water_temp, "./data/temp_data.csv")
+        write_csv(temp_profiles, "./data/temp_profiles.csv")
         
-        
-        secchi <- neonstore::neon_table(table = "dep_secchi-basic", site = "SUGG") %>%
+        secchi <- neonstore::neon_read(table = "dep_secchi-basic", site = "SUGG") %>%
                 select(date, secchiMeanDepth) %>%
                 arrange(date)%>%
                 mutate(hour = lubridate::hour(date- 5*3600))%>%
@@ -130,6 +144,8 @@ download_neon_files <- function(siteID_neon, siteID, products, buoy_products){
         
         kw <- secchi %>% select(value) %>% na.omit(.)%>%
                 summarize(kw = 1.7/mean(value))
+        
+        
         
         write_csv(secchi, "./data/secchi_data.csv")
 

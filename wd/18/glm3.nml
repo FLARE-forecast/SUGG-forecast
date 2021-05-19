@@ -1,0 +1,111 @@
+&glm_setup
+   sim_name = 'SUGG'
+   max_layers = 500
+   min_layer_vol = 0.025
+   min_layer_thick = 0.15
+   max_layer_thick = 0.33
+   non_avg = .true.
+/
+&light
+   light_mode = 0
+   n_bands = 4
+   light_extc = 1, 0.5, 2, 4
+   energy_frac = 0.51, 0.45, 0.035, 0.005
+   Benthic_Imin = 10
+   Kw = 0.473
+/
+&mixing
+   coef_mix_conv = 0.2
+   coef_wind_stir = 0.23
+   coef_mix_shear = 0.3
+   coef_mix_turb = 0.51
+   coef_mix_KH = 0.3
+   coef_mix_hyp = 0.5
+   deep_mixing = 2
+   coef_mix_shreq = 0
+/
+&morphometry
+   lake_name = 'SuggsLake'
+   latitude = 29.68778
+   longitude = -82.01775
+   bsn_len = 623
+   bsn_wid = 685
+   bsn_vals = 8
+   H = 25.8, 25.9, 26.4, 26.9, 27.4, 27.9, 28.4, 28.9
+   A = 0, 125.6347, 53435.4847, 208192.2158, 263941.7309, 288249.2588, 298163.4627, 307362.1855
+/
+&time
+   timefmt = 2
+   start = '2020-04-21 00:00'
+   stop = '2020-04-22 00:00'
+   dt = 1800
+   num_days = 1
+   timezone = -5
+/
+&output
+   out_dir = '.'
+   out_fn = 'output'
+   nsave = 48
+/
+&init_profiles
+   num_depths = 18
+   lake_depth = 3.1967
+   the_depths = 0, 0.2928, 0.6024, 0.9056, 1.146, 1.3838, 1.561, 1.7278, 1.9165, 2.0594, 2.1723, 2.3042, 2.4926, 2.585, 2.6829, 2.7647, 2.8312, 2.8846
+   the_temps = 25.6601, 24.5842, 23.6542, 22.8231, 21.7881, 20.89, 19.4757, 17.8822, 16.3957, 16.3519, 16.4193, 16.5075, 16.5935, 16.6674, 16.7372, 16.7948, 16.8414, 16.9517
+   the_sals = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   num_wq_vars = 0
+   wq_names = 'OXY_oxy'
+   wq_init_vals = 300, 300, 300, 300, 300, 300, 300, 300
+   snow_thickness = 0
+   white_ice_thickness = 0
+   blue_ice_thickness = 0
+   avg_surf_temp = 26.9537
+   restart_variables = 2.5943, 0.606605276281751, 0.00979562655164639, 4.92633860749746e-06, 183511756.013712, 0, 0.143363392373431, 1224, 1224, 1224, 0, 2.5943, 0, 0, 0, 0, 0
+/
+&meteorology
+   met_sw = .true.
+   lw_type = 'LW_IN'
+   rain_sw = .true.
+   atm_stab = 0
+   catchrain = .false.
+   rad_mode = 1
+   albedo_mode = 1
+   cloud_mode = 4
+   meteo_fl = '/Users/ryanmcclure/Documents/SUGG-forecast/wd/met_ens18.csv'
+   subdaily = .true.
+   wind_factor = 1
+   sw_factor = 1.2
+   lw_factor = 1.0917
+   at_factor = 1
+   rh_factor = 1
+   rain_factor = 0.7
+   cd = 0.0013
+   ce = 0.0013
+   ch = -0.0038
+   rain_threshold = 0.04
+   time_fmt = 'YYYY-MM-DD hh:mm:ss'
+/
+&inflow
+   num_inflows = 0
+/
+&outflow
+   num_outlet = 0
+   seepage = .true.
+   seepage_rate = 3
+/
+&snowice
+   snow_albedo_factor = 1
+   snow_rho_max = 500
+   snow_rho_min = 100
+/
+&sediment
+   benthic_mode = 2
+   sed_heat_model = 1
+   n_zones = 1
+   zone_heights = 3.5
+   sed_heat_Ksoil = 1.2
+   sed_temp_depth = 0.5
+   sed_temp_mean = 20.6272
+   sed_temp_amplitude = 0
+   sed_temp_peak_doy = 276.9747
+/

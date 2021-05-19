@@ -6,10 +6,10 @@ met_qaqc <- function(realtime_file,
   
   if(is.na(qaqc_file)){
     d1 <- readr::read_csv(realtime_file)
-    d1$time <- lubridate::force_tz(d1$time, tzone = "EST") #input_file_tz
+    d1$time <- lubridate::force_tz(d1$time, tzone = "UTC") #input_file_tz
     
     d2 <- readr::read_csv(qaqc_file)
-    d2$time <- lubridate::force_tz(d2$time, tzone = "EST") #input_file_tz
+    d2$time <- lubridate::force_tz(d2$time, tzone = "UTC") #input_file_tz
 
     d1 <- data.frame(time = d1$time, ShortWave = d1$surface_downwelling_shortwave_flux_in_air, LongWave = d1$surface_downwelling_longwave_flux_in_air, AirTemp = d1$air_temperature, RelHum = d1$specific_humidity, WindSpeed = d1$wind_speed, Rain = d1$precipitation_flux, pressure = d1$air_pressure)
     d2 <- data.frame(time = d2$time, ShortWave = d2$surface_downwelling_shortwave_flux_in_air, LongWave = d2$surface_downwelling_longwave_flux_in_air, AirTemp = d2$air_temperature, RelHum = d2$specific_humidity, WindSpeed = d2$wind_speed, Rain = d2$precipitation_flux, pressure = d2$air_pressure)
@@ -20,12 +20,13 @@ met_qaqc <- function(realtime_file,
     
   }else{
     
-    d <- readr::read_csv(realtime_file)
+    d <- readr::read_csv(realtime_file)%>%
+      mutate(WindSpeed = ifelse(WindSpeed == 0, NA, WindSpeed))
   }
   
   d <- as.data.frame(d)
-  
-  
+
+    
   # Fill in missing data (Used Amelia II instead of NLDAS)
   # This way all data are solely derived from the NEON data platforms
   
@@ -43,7 +44,7 @@ met_qaqc <- function(realtime_file,
     select(time, LongWave)%>%
     group_by(time)%>%
     summarise_all(funs(mean))
-  plot(lw_imputations$time, lw_imputations$LongWave)
+
   
   #AirTemp
   amelia.at <- amelia(d, m = 50, polytime = 0, ts = "time", cs = NULL, lags = "AirTemp", leads = "AirTemp")
@@ -51,7 +52,7 @@ met_qaqc <- function(realtime_file,
     select(time, AirTemp)%>%
     group_by(time)%>%
     summarise_all(funs(mean))
-  plot(at_imputations$time, at_imputations$AirTemp)
+
   
   #Himidity
   amelia.rh <- amelia(d, m = 50, polytime = 2, ts = "time", cs = NULL, lags = "RelHum", leads = "RelHum")
@@ -60,7 +61,7 @@ met_qaqc <- function(realtime_file,
     group_by(time)%>%
     summarise_all(funs(mean))%>%
     mutate(RelHum = ifelse(RelHum >= 100, 100, RelHum))
-  plot(rh_imputations$time, rh_imputations$RelHum)
+
   
   #Rain
   amelia.pr <- amelia(d, m = 50, polytime = 2, ts = "time", cs = NULL, lags = "Rain", leads = "Rain")
@@ -69,7 +70,7 @@ met_qaqc <- function(realtime_file,
     group_by(time)%>%
     summarise_all(funs(mean))%>%
     mutate(Rain = ifelse(Rain <= 0, 0, Rain))
-  plot(pr_imputations$time, pr_imputations$Rain)
+
   
   #WindSpeed
   amelia.ws <- amelia(d, m = 50, polytime = 2, ts = "time", cs = NULL, lags = "WindSpeed", leads = "WindSpeed")
@@ -78,7 +79,7 @@ met_qaqc <- function(realtime_file,
     group_by(time)%>%
     summarise_all(funs(mean))%>%
     mutate(WindSpeed = ifelse(WindSpeed <= 0, 0, WindSpeed))
-  plot(ws_imputations$time, ws_imputations$WindSpeed)
+
   
   #Pressure
   amelia.p <- amelia(d, m = 50, polytime = 2, ts = "time", cs = NULL, lags = "Pressure", leads = "Pressure")
@@ -86,7 +87,7 @@ met_qaqc <- function(realtime_file,
     select(time, Pressure)%>%
     group_by(time)%>%
     summarise_all(funs(mean))
-  plot(p_imputations$time, p_imputations$Pressure)
+
   
   
   imputed <- left_join(sw_imputations, lw_imputations, by = "time")%>%
@@ -117,7 +118,7 @@ met_qaqc <- function(realtime_file,
            air_pressure = Pressure.x)
   
   
-  d$time <- lubridate::force_tz(d$time, tzone = "EST") #input_file_tz
+  d$time <- lubridate::force_tz(d$time, tzone = "UTC") #input_file_tz
   
   
   wshgt <- 3
@@ -158,10 +159,17 @@ met_qaqc <- function(realtime_file,
     tidyr::drop_na()
   
   
+  p <- d %>% reshape2::melt(., id = "time") %>% ggplot(.) +
+    geom_line(aes(time, value)) + labs(title = "Post imputation")+
+    facet_wrap(~variable, scales = "free_y") +
+    theme_classic()
+  
+  return(p)
+  
   model_name <- "observed-met"
   site <- "sugg"
-  lat <- 29.68778
-  lon <- 360-82.017745
+  lat <- 29.67562
+  lon <- -82.0085
   start_time <- dplyr::first((d$time))
   end_time <- dplyr::last((d$time))
   cf_units <- cf_var_units1
@@ -205,5 +213,5 @@ met_qaqc <- function(realtime_file,
   }
   
   ncdf4::nc_close(nc_flptr)  #Write to the disk/storage
-  
+
 }

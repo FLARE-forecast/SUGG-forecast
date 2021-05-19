@@ -1,5 +1,6 @@
 temp_qaqc <- function(realtime_file,
                       surface_sonde,
+                      profiles,
                       qaqc_file,
                       maintenance_file,
                       input_file_tz,
@@ -16,7 +17,7 @@ temp_qaqc <- function(realtime_file,
                   value = ifelse(is.nan(value), NA, value),
                   hour = lubridate::hour(timestamp))%>%
     rename(date = timestamp)%>%
-    filter(date < "2020-12-06")
+    filter(date < "2020-12-05 00:00:00")
   
   d_top <- readr::read_csv(surface_sonde)
 
@@ -40,12 +41,17 @@ temp_qaqc <- function(realtime_file,
            depth = 0.5)%>%
     select(time, hour, depth, value, variable, method)%>%
     rename(date = time)
-
+  
+  
+  d_prof <- readr::read_csv(profiles)%>%
+    rename(date = timestamp)
   
   d <- d_therm %>% mutate(depth = as.numeric(depth))
   d_top <- d_therm_top %>% mutate(depth = as.numeric(depth))
+  d_prof <- d_prof %>% mutate(depth = as.numeric(depth))
   
   d <- bind_rows(d,d_top)
+  d <- bind_rows(d, d_prof)
   
   write_csv(d, paste0(config$qaqc_data_location,"/observations_postQAQC_long.csv"))
 }

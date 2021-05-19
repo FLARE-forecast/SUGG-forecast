@@ -8,6 +8,7 @@ in_situ_qaqc <- function(insitu_obs_fname,
   
   d <- temp_qaqc(realtime_file = insitu_obs_fname[1],
                  surface_sonde = insitu_obs_fname[2],
+                 profiles = insitu_obs_fname[3],
                  qaqc_file = cleaned_observations_file_long,
                  input_file_tz = "EST",
                  focal_depths,

@@ -5,14 +5,14 @@
 lake_name_code: SUGG
 lake_name: Suggs Lake
 lake_latitude: 29.68778   #Degrees North
-lake_longitude: 82.017745  #Degrees West
+lake_longitude: -82.017745  #Degrees West
 
 #Time zone that GLM is run in
 #Currently needed to be GMT so that it interfaces with the NOAA forecast
 #reference_tzone <<- "GMT"
 #Local time zone of the lake
 
-local_tzone: "EST"
+local_tzone: "UTC"
 
 noaa_location: SUGG
 
@@ -37,6 +37,7 @@ realtime_temp_location: data
 insitu_obs_fname:
     - temp_data.csv
     - surface_sonde.csv
+    - temp_profiles.csv
 
 secchi_fname: 
     - secchi_data.csv
@@ -52,13 +53,14 @@ target_variables:
     - secchi
 
 averaging_period:
-    - "1 hour"
+    - "1 day"
     
 averaging_period_starting_hour: "00:00:00"
 
 measurement_methods: 
     temperature:
         - thermistor
+        - profile
         - sonde
         - secchi
     
